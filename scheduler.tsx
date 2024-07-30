@@ -1,10 +1,26 @@
 const express = require("express");
 const axios = require("axios");
 const cron = require("node-cron");
-const notifier = require("node-notifier");
+const mailer = require("nodemailer");
+require("dotenv").config();
 
 const app = express();
 const regex = /<td\s+CLASS="dddefault">(\d+)<\/td>/gi;
+
+let transporter = mailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+});
+
+let mailOptions = {
+  from: process.env.EMAIL_USER,
+  to: process.env.EMAIL_REC,
+  subject: "Course open!!!",
+  text: "Tyagi's CSCE 312 has an open spot. https://tamu.collegescheduler.com/entry",
+};
 
 const fetchData = async (crn) => {
   try {
@@ -21,12 +37,8 @@ const fetchData = async (crn) => {
     console.log(crn, ":", matches);
 
     if (matches[matches.length - 1] != "0") {
-      notifier.notify({
-        title: "Course open!!!",
-        message: "Tyagi's CSCE 312 has an open spot.",
-        sound: true,
-        wait: false,
-        open: "https://tamu.collegescheduler.com/entry",
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) console.log(error);
       });
     }
   } catch (error) {
@@ -36,6 +48,15 @@ const fetchData = async (crn) => {
 
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
+});
+
+app.get("/", (req, res) => {
+  // listen for the 'close' event on the request
+  req.on("close", () => {
+    console.log("closed connection");
+  });
+
+  console.log(res.socket.destroyed); // true if socket is closed
 });
 
 cron.schedule("* * * * *", () => {
