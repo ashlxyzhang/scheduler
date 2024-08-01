@@ -1,10 +1,8 @@
-const express = require("express");
 const axios = require("axios");
 const cron = require("node-cron");
 const mailer = require("nodemailer");
 require("dotenv").config();
 
-const app = express();
 const regex = /<td\s+CLASS="dddefault">(\d+)<\/td>/gi;
 
 let transporter = mailer.createTransport({
@@ -45,19 +43,6 @@ const fetchData = async (crn) => {
     console.error("Error:", error);
   }
 };
-
-app.listen(3000, () => {
-  console.log("Server is running on port 3000");
-});
-
-app.get("/", (req, res) => {
-  // listen for the 'close' event on the request
-  req.on("close", () => {
-    console.log("closed connection");
-  });
-
-  console.log(res.socket.destroyed); // true if socket is closed
-});
 
 cron.schedule("* * * * *", () => {
   fetchData(57925);
